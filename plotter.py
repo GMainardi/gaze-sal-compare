@@ -1,4 +1,5 @@
 import plotly.express as px
+import cv2 as cv
 from dash import Dash, html, dcc, Input, Output, ctx, callback
 from data_loader import DataLoader
 
@@ -7,7 +8,7 @@ subjects = DataLoader('data').load_data()
 app = Dash(__name__)
 
 default_subject = 'E1'
-fig = px.imshow(subjects[default_subject].get_image())
+fig = px.imshow(cv.cvtColor(subjects[default_subject].get_image(), cv.COLOR_BGR2RGB))
 default_slider_max = len(subjects[default_subject].screen_images)-1
 default_slider_marks = {0: "0"}
 default_slider_marks[default_slider_max] = str(default_slider_max)
@@ -34,21 +35,24 @@ app.layout = html.Div(children=[
     
     html.Div(
         [
-            dcc.Dropdown(list(subjects.keys()), 'E1', id='subject-dropdown'),
-        ],
-        style={'width': '30%'},
+            html.Div(dcc.Dropdown(list(subjects.keys()), default_subject, id='subject-dropdown'), style={'width': '30%'}),
+            dcc.Checklist(['User', 'Saliency Model'], [], inline=True, id='maps-checklist')
+        ]
     )
 ])
 
 @callback(
     Output('image-graph', 'figure'),
     Input('frame-slider', 'value'),
-    Input('subject-dropdown', 'value')
+    Input('subject-dropdown', 'value'),
+    Input('maps-checklist', 'value')
 )
-def update_image(frame, subject):
+def update_image(frame, subject, checklist):
     current_subject = subject
     subjects[subject].index = frame
-    return px.imshow(subjects[subject].get_image())
+    subjects[subject].heatmap_on if 'User' in checklist else subjects[subject].heatmap_off
+    subjects[subject].saliency_on if 'Saliency Model' in checklist else subjects[subject].saliency_off
+    return px.imshow(cv.cvtColor(subjects[subject].get_image(), cv.COLOR_BGR2RGB))
 
 @callback(
     Output('frame-slider', 'value'),
