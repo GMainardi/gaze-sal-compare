@@ -8,20 +8,20 @@ from fake_gaze import FakeGaze
 class Mode(Enum):
     SCREEN= 1
     HEATMAP = 2
-    SALIENCE = 3
-    HEATMAP_SALIENCE = 4
+    SALIENCY = 3
+    HEATMAP_SALIENCY = 4
 
 class ImageProcessor:
 
     def __init__(self, 
         screen_images: list[np.array], 
         heatmap_images: list[np.array], 
-        salience_images: list[np.array]
+        saliency_images: list[np.array]
     ) -> None:
         
         self.screen_images = screen_images
         self.heatmap_images = heatmap_images
-        self.salience_images = salience_images
+        self.saliency_images = saliency_images
         self.index = 0
         self.mode =  Mode.SCREEN
         self.heatmap_center_extractor = HeatmapCenterExtractor()
@@ -36,7 +36,7 @@ class ImageProcessor:
         
         _, bi = cv.threshold(diff,15,255,0)
 
-        circle = self.heatmap_center_extractor.get_salience_contour(bi)
+        circle = self.heatmap_center_extractor.get_saliency_contour(bi)
         return (int(circle[0][0]), int(circle[0][1])), int(circle[1])
 
     def _dim_circle(self, radius: int) -> np.array:
@@ -47,18 +47,18 @@ class ImageProcessor:
 
         image[radius, radius] = (255, 255, 255)
 
-    def __get_blue_salience(self, salience: np.array) -> np.array:
-        salience = cv.cvtColor(salience, cv.COLOR_GRAY2BGR)
-        salience[:, :, 1] = 0
-        salience[:, :, 2] = 0
-        return salience
+    def __get_blue_saliency(self, saliency: np.array) -> np.array:
+        saliency = cv.cvtColor(saliency, cv.COLOR_GRAY2BGR)
+        saliency[:, :, 1] = 0
+        saliency[:, :, 2] = 0
+        return saliency
     
-    def __get_purple_salience(self, salience: np.array) -> np.array:
-        salience = cv.cvtColor(salience, cv.COLOR_GRAY2BGR)
-        salience[:, :, 1] = 0
-        return salience
+    def __get_purple_saliency(self, saliency: np.array) -> np.array:
+        saliency = cv.cvtColor(saliency, cv.COLOR_GRAY2BGR)
+        saliency[:, :, 1] = 0
+        return saliency
     
-    def __get_gaze_salience(self, screen: np.array, heatmap: np.array) -> np.array:
+    def __get_gaze_saliency(self, screen: np.array, heatmap: np.array) -> np.array:
         center, radius = self.__get_heatmap_detection(screen, heatmap)
         fake_gaze = FakeGaze(radius)
         return fake_gaze.create_gaze_image(screen.shape, center)
@@ -70,17 +70,17 @@ class ImageProcessor:
                 return self.screen
             case Mode.HEATMAP: # gaze data
                 return self.__merge_frames(self.screen, 
-                                           self.__get_gaze_salience(self.screen, self.heatmap))   
+                                           self.__get_gaze_saliency(self.screen, self.heatmap))   
 
-            case Mode.SALIENCE:
+            case Mode.SALIENCY:
                 return self.__merge_frames(self.screen, 
-                                           self.__get_blue_salience(self.salience))
-            case Mode.HEATMAP_SALIENCE:
+                                           self.__get_blue_saliency(self.saliency))
+            case Mode.HEATMAP_SALIENCY:
                 
-                gray_heatmap = cv.cvtColor(self.__get_gaze_salience(self.screen, self.heatmap), cv.COLOR_BGR2GRAY)
-                mask = (gray_heatmap/25 * self.salience) 
+                gray_heatmap = cv.cvtColor(self.__get_gaze_saliency(self.screen, self.heatmap), cv.COLOR_BGR2GRAY)
+                mask = (gray_heatmap/25 * self.saliency) 
                 mask[mask > 255] = 255
-                return self.__merge_frames(self.screen, self.__get_purple_salience(mask.astype(np.uint8)))
+                return self.__merge_frames(self.screen, self.__get_purple_saliency(mask.astype(np.uint8)))
     
     @property
     def next(self) -> None:
@@ -91,45 +91,42 @@ class ImageProcessor:
         self.index = max(self.index - 1, 0)
 
     @property
-    def salience_on(self) -> None:
+    def saliency_on(self) -> None:
         if self.mode == Mode.SCREEN:
-            self.mode = Mode.SALIENCE
+            self.mode = Mode.SALIENCY
         elif self.mode == Mode.HEATMAP:
-            self.mode = Mode.HEATMAP_SALIENCE
+            self.mode = Mode.HEATMAP_SALIENCY
     
     @property
-    def salience_off(self) -> None:
-        if self.mode == Mode.SALIENCE:
+    def saliency_off(self) -> None:
+        if self.mode == Mode.SALIENCY:
             self.mode = Mode.SCREEN
-        elif self.mode == Mode.HEATMAP_SALIENCE:
+        elif self.mode == Mode.HEATMAP_SALIENCY:
             self.mode = Mode.HEATMAP
 
     @property
     def heatmap_on(self) -> None:
         if self.mode == Mode.SCREEN:
             self.mode = Mode.HEATMAP
-        elif self.mode == Mode.SALIENCE:
-            self.mode = Mode.HEATMAP_SALIENCE
+        elif self.mode == Mode.SALIENCY:
+            self.mode = Mode.HEATMAP_SALIENCY
     
     @property
     def heatmap_off(self) -> None:
         if self.mode == Mode.HEATMAP:
             self.mode = Mode.SCREEN
-        elif self.mode == Mode.HEATMAP_SALIENCE:
-            self.mode = Mode.SALIENCE
+        elif self.mode == Mode.HEATMAP_SALIENCY:
+            self.mode = Mode.SALIENCY
 
     @property
     def screen(self) -> np.array:
-        img = cv.imread(self.screen_images[self.index])
-        return cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        return cv.imread(self.screen_images[self.index])
     
     @property
     def heatmap(self) -> np.array:
-        img = cv.imread(self.heatmap_images[self.index])
-        return cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        return cv.imread(self.heatmap_images[self.index])
     
     @property
-    def salience(self) -> np.array:
-        img = cv.imread(self.salience_images[self.index], cv.IMREAD_GRAYSCALE)
-        return cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    def saliency(self) -> np.array:
+        return cv.imread(self.saliency_images[self.index], cv.IMREAD_GRAYSCALE)
     

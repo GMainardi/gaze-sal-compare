@@ -35,10 +35,10 @@ class HeatmapCenterExtractor():
         pass
     
     def get_salience_center(self, image):
-        return self.get_salience_contour(image).center
+        return self.get_saliency_contour(image).center
     
 
-    def get_salience_contour(self, image):
+    def get_saliency_contour(self, image):
         contours = self.__get_image_contours(image)
         if len(contours):
             return max(contours, key=lambda x: x.area).circle
