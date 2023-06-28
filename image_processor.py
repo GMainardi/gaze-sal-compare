@@ -84,11 +84,11 @@ class ImageProcessor:
     
     @property
     def next(self) -> None:
-        self.index = max(self.index + 1, len(self.screen_images) - 1)
+        self.index = min(self.index + 1, len(self.screen_images) - 1)
 
     @property
     def prev(self) -> None:
-        self.index = min(self.index - 1, 0)
+        self.index = max(self.index - 1, 0)
 
     @property
     def salience_on(self) -> None:
@@ -120,13 +120,16 @@ class ImageProcessor:
 
     @property
     def screen(self) -> np.array:
-        return cv.imread(self.screen_images[self.index])
+        img = cv.imread(self.screen_images[self.index])
+        return cv.cvtColor(img, cv.COLOR_BGR2RGB)
     
     @property
     def heatmap(self) -> np.array:
-        return cv.imread(self.heatmap_images[self.index])
+        img = cv.imread(self.heatmap_images[self.index])
+        return cv.cvtColor(img, cv.COLOR_BGR2RGB)
     
     @property
     def salience(self) -> np.array:
-        return cv.imread(self.salience_images[self.index], cv.IMREAD_GRAYSCALE)
+        img = cv.imread(self.salience_images[self.index], cv.IMREAD_GRAYSCALE)
+        return cv.cvtColor(img, cv.COLOR_BGR2RGB)
     
