@@ -9,7 +9,7 @@ app = Dash(__name__, external_stylesheets = ['https://codepen.io/chriddyp/pen/bW
 
 default_subject = 'E1'
 fig = px.imshow(cv.cvtColor(subjects[default_subject].get_image(), cv.COLOR_BGR2RGB))
-fig.update_layout(width=1366, height=768, margin=dict(l=10, r=10, b=10, t=10))
+fig.update_layout(width=911, height=512, margin=dict(l=10, r=10, b=10, t=10))
 fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
 
 default_slider_max = len(subjects[default_subject].screen_images)-1
@@ -43,10 +43,10 @@ app.layout = html.Div(children=[
     html.Div(
         [
             html.Button('<', n_clicks=0, id='prev-btn', style={'display': 'inline-block', 'verticalAlign': 'top'}),
-            html.Div(dcc.Slider(0, default_slider_max, 1, value=0, marks=default_slider_marks, id='frame-slider'), style={'display': 'inline-block', 'width': '70%'}),
+            html.Div(dcc.Slider(0, default_slider_max, 1, value=0, marks=default_slider_marks, id='frame-slider'), style={'display': 'inline-block', 'width': '50%'}),
             html.Button('>', n_clicks=0, id='next-btn', style={'display': 'inline-block', 'verticalAlign': 'top'})
         ],
-        style={'align-items':'center', 'justify-content':'center', 'marginLeft' : '235px'}
+        style={'align-items':'center', 'justify-content':'center', 'marginLeft' : '460px'}
     )  
 ])
 
@@ -62,7 +62,7 @@ def update_image(frame, subject, checklist):
     subjects[subject].heatmap_on if 'User' in checklist else subjects[subject].heatmap_off
     subjects[subject].saliency_on if 'Saliency Model' in checklist else subjects[subject].saliency_off
     fig = px.imshow(cv.cvtColor(subjects[subject].get_image(), cv.COLOR_BGR2RGB))
-    fig.update_layout(width=1366, height=768, margin=dict(l=10, r=10, b=10, t=10))
+    fig.update_layout(width=911, height=512, margin=dict(l=10, r=10, b=10, t=10))
     fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
     return fig
 
